@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Masters Auction Pool</title>
+  <style>
+    :root {
+      --green: #123524;
+      --gold: #c9a227;
+      --bg: #f7f7f2;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --danger: #b91c1c;
+      --success: #166534;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: var(--green);
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .toolbar input {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .golfers {
+      max-height: 650px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .golfer-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid #ececec;
+    }
+
+    .golfer-row:last-child { border-bottom: none; }
+    .golfer-name { font-weight: 600; }
+    .golfer-salary { color: var(--muted); }
+
+    button {
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.remove {
+      background: #ef4444;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .picked-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 14px 0 18px;
+      min-height: 80px;
+    }
+
+    .picked-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .muted { color: var(--muted); }
+    .error { color: var(--danger); font-weight: 600; }
+    .success { color: var(--success); font-weight: 600; }
+
+    .rules {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .submit-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .topbar { grid-template-columns: 1fr; }
+      .golfer-row, .picked-item { grid-template-columns: 1fr auto; }
+      .golfer-row button, .picked-item button { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Private Masters Auction Pool</h1>
+    <p class="subtitle">Pick at least 4 golfers. Stay under budget. Only your top 4 scores count.</p>
+
+    <div class="topbar">
+      <div class="stat">
+        <div class="stat-label">Budget</div>
+        <div class="stat-value" id="budgetValue">$50,000</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Spent</div>
+        <div class="stat-value" id="spentValue">$0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value" id="remainingValue">$50,000</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Golfers Picked</div>
+        <div class="stat-value" id="pickedCount">0</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div class="toolbar">
+          <input type="text" id="searchInput" placeholder="Search golfers..." />
+        </div>
+        <div class="golfers" id="golfersList"></div>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin-top:0; color: var(--green);">Your Entry</h2>
+        <div class="submit-block">
+          <input type="text" id="entryName" placeholder="Your name" />
+          <input type="email" id="entryEmail" placeholder="Your email (optional)" />
+        </div>
+
+        <div class="picked-list" id="pickedList"></div>
+
+        <div class="rules">
+          Rules:<br>
+          • Must pick at least 4 golfers<br>
+          • Can pick more than 4 golfers<br>
+          • Only top 4 scores count<br>
+          • Must stay at or under the budget
+        </div>
+
+        <p id="message" class="muted"></p>
+
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button id="submitBtn">Submit Entry</button>
+          <button class="secondary" id="clearBtn" type="button">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BUDGET = 100;
+
+    // Replace with your Apps Script Web App URL after deployment
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpyZZhkbYb4TUBSqql2qpC7_xxazdrXAVtOCvk0Al8sfcFjAwb99M2qQA41_w6touA/exec";
+
+    // Replace this list with your real golfer/salary list
+    const golfers = [
+      { name: "Ludvig Åberg", salary: 19 },
+      { name: "Daniel Berger", salary: 8 },
+      { name: "Akshay Bhatia", salary: 8 },
+      { name: "Keegan Bradley", salary: 8 },
+      { name: "Michael Brennan", salary: 4 },
+      { name: "Jacob Bridgeman", salary: 5 },
+      { name: "Sam Burns", salary: 10 },
+      { name: "Ángel Cabrera", salary: 3 },
+      { name: "Brian Campbell", salary: 4 },
+      { name: "Patrick Cantlay", salary: 13 },
+      { name: "Wyndham Clark", salary: 9 },
+      { name: "Corey Conners", salary: 11 },
+      { name: "Fred Couples", salary: 3 },
+      { name: "Jason Day", salary: 10 },
+      { name: "Bryson DeChambeau", salary: 18 },
+      { name: "Nicolas Echavarria", salary: 5 },
+      { name: "Harris English", salary: 5 },
+      { name: "Ethan Fang", salary: 3 },
+      { name: "Matt Fitzpatrick", salary: 14 },
+      { name: "Tommy Fleetwood", salary: 15 },
+      { name: "Ryan Fox", salary: 7 },
+      { name: "Sergio García", salary: 7 },
+      { name: "Ryan Gerard", salary: 5 },
+      { name: "Chris Gotterup", salary: 6 },
+      { name: "Max Greyserman", salary: 5 },
+      { name: "Ben Griffin", salary: 6 },
+      { name: "Harry Hall", salary: 5 },
+      { name: "Brian Harman", salary: 8 },
+      { name: "Tyrrell Hatton", salary: 12 },
+      { name: "Russell Henley", salary: 11 },
+      { name: "Jackson Herrington", salary: 3 },
+      { name: "Nicolai Højgaard", salary: 6 },
+      { name: "Rasmus Højgaard", salary: 6 },
+      { name: "Brandon Holtz", salary: 3 },
+      { name: "Max Homa", salary: 9 },
+      { name: "Viktor Hovland", salary: 15 },
+      { name: "Mason Howell", salary: 3 },
+      { name: "Sungjae Im", salary: 10 },
+      { name: "Casey Jarvis", salary: 5 },
+      { name: "Dustin Johnson", salary: 7 },
+      { name: "Zach Johnson", salary: 4 },
+      { name: "Naoyuki Kataoka", salary: 3 },
+      { name: "John Keefer", salary: 5 },
+      { name: "Michael Kim", salary: 5 },
+      { name: "Si Woo Kim", salary: 10 },
+      { name: "Kurt Kitayama", salary: 5 },
+      { name: "Jake Knapp", salary: 5 },
+      { name: "Brooks Koepka", salary: 13 },
+      { name: "Fifa Laopakdee", salary: 3 },
+      { name: "Min Woo Lee", salary: 11 },
+      { name: "Haotong Li", salary: 5 },
+      { name: "Shane Lowry", salary: 12 },
+      { name: "Robert MacIntyre", salary: 7 },
+      { name: "Hideki Matsuyama", salary: 14 },
+      { name: "Matt McCarty", salary: 5 },
+      { name: "Rory McIlroy", salary: 22 },
+      { name: "Tom McKibbin", salary: 5 },
+      { name: "Maverick McNealy", salary: 7 },
+      { name: "Phil Mickelson", salary: 5 },
+      { name: "Collin Morikawa", salary: 16 },
+      { name: "Rasmus Neergaard-Petersen", salary: 5 },
+      { name: "Alex Noren", salary: 7 },
+      { name: "Andrew Novak", salary: 5 },
+      { name: "José María Olazábal", salary: 3 },
+      { name: "Carlos Ortiz", salary: 5 },
+      { name: "Marco Penge", salary: 5 },
+      { name: "Aldrich Potgieter", salary: 5 },
+      { name: "Mateo Pulcini", salary: 3 },
+      { name: "Jon Rahm", salary: 20 },
+      { name: "Aaron Rai", salary: 7 },
+      { name: "Patrick Reed", salary: 7 },
+      { name: "Kristoffer Reitan", salary: 5 },
+      { name: "Davis Riley", salary: 7 },
+      { name: "Justin Rose", salary: 7 },
+      { name: "Xander Schauffele", salary: 18 },
+      { name: "Scottie Scheffler", salary: 26 },
+      { name: "Charl Schwartzel", salary: 4 },
+      { name: "Adam Scott", salary: 10 },
+      { name: "Vijay Singh", salary: 3 },
+      { name: "Cameron Smith", salary: 9 },
+      { name: "J.J. Spaun", salary: 5 },
+      { name: "Jordan Spieth", salary: 12 },
+      { name: "Sam Stevens", salary: 5 },
+      { name: "Sepp Straka", salary: 10 },
+      { name: "Nick Taylor", salary: 7 },
+      { name: "Justin Thomas", salary: 13 },
+      { name: "Sami Valimaki", salary: 5 },
+      { name: "Bubba Watson", salary: 4 },
+      { name: "Mike Weir", salary: 3 },
+      { name: "Danny Willett", salary: 4 },
+      { name: "Gary Woodland", salary: 8 },
+      { name: "Cameron Young", salary: 14 }
+    ];
+
+    const picked = new Map();
+
+    const golfersListEl = document.getElementById("golfersList");
+    const pickedListEl = document.getElementById("pickedList");
+    const searchInputEl = document.getElementById("searchInput");
+    const budgetValueEl = document.getElementById("budgetValue");
+    const spentValueEl = document.getElementById("spentValue");
+    const remainingValueEl = document.getElementById("remainingValue");
+    const pickedCountEl = document.getElementById("pickedCount");
+    const messageEl = document.getElementById("message");
+    const submitBtnEl = document.getElementById("submitBtn");
+    const clearBtnEl = document.getElementById("clearBtn");
+    const entryNameEl = document.getElementById("entryName");
+    const entryEmailEl = document.getElementById("entryEmail");
+
+    function formatMoney(value) {
+      return "$" + value.toLocaleString();
+    }
+
+    function getSpent() {
+      return Array.from(picked.values()).reduce((sum, golfer) => sum + golfer.salary, 0);
+    }
+
+    function getRemaining() {
+      return BUDGET - getSpent();
+    }
+
+    function renderGolfers() {
+      const query = searchInputEl.value.trim().toLowerCase();
+      const filtered = golfers.filter(g => g.name.toLowerCase().includes(query));
+
+      golfersListEl.innerHTML = "";
+
+      filtered.forEach(golfer => {
+        const row = document.createElement("div");
+        row.className = "golfer-row";
+
+        const name = document.createElement("div");
+        name.className = "golfer-name";
+        name.textContent = golfer.name;
+
+        const salary = document.createElement("div");
+        salary.className = "golfer-salary";
+        salary.textContent = formatMoney(golfer.salary);
+
+        const button = document.createElement("button");
+        const isPicked = picked.has(golfer.name);
+        button.textContent = isPicked ? "Remove" : "Add";
+        if (isPicked) button.classList.add("remove");
+
+        button.addEventListener("click", () => {
+          if (picked.has(golfer.name)) {
+            picked.delete(golfer.name);
+          } else {
+            picked.set(golfer.name, golfer);
+          }
+          renderAll();
+        });
+
+        row.appendChild(name);
+        row.appendChild(salary);
+        row.appendChild(button);
+        golfersListEl.appendChild(row);
+      });
+    }
+
+    function renderPicked() {
+      pickedListEl.innerHTML = "";
+      const pickedGolfers = Array.from(picked.values()).sort((a, b) => b.salary - a.salary);
+
+      if (pickedGolfers.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "No golfers selected yet.";
+        pickedListEl.appendChild(empty);
+        return;
+      }
+
+      pickedGolfers.forEach(golfer => {
+        const row = document.createElement("div");
+        row.className = "picked-item";
+
+        const name = document.createElement("div");
+        name.textContent = golfer.name;
+
+        const salary = document.createElement("div");
+        salary.className = "golfer-salary";
+        salary.textContent = formatMoney(golfer.salary);
+
+        const button = document.createElement("button");
+        button.textContent = "Remove";
+        button.className = "remove";
+        button.addEventListener("click", () => {
+          picked.delete(golfer.name);
+          renderAll();
+        });
+
+        row.appendChild(name);
+        row.appendChild(salary);
+        row.appendChild(button);
+        pickedListEl.appendChild(row);
+      });
+    }
+
+    function renderStats() {
+      const spent = getSpent();
+      const remaining = getRemaining();
+      budgetValueEl.textContent = formatMoney(BUDGET);
+      spentValueEl.textContent = formatMoney(spent);
+      remainingValueEl.textContent = formatMoney(remaining);
+      pickedCountEl.textContent = picked.size;
+
+      if (remaining < 0) {
+        remainingValueEl.style.color = "#b91c1c";
+      } else {
+        remainingValueEl.style.color = "";
+      }
+    }
+
+    function validateEntry() {
+      const spent = getSpent();
+      const remaining = BUDGET - spent;
+      const hasEnoughGolfers = picked.size >= 4;
+      const hasName = entryNameEl.value.trim().length > 0;
+
+      if (!hasName) {
+        return { ok: false, message: "Please enter your name." };
+      }
+      if (!hasEnoughGolfers) {
+        return { ok: false, message: "You must pick at least 4 golfers." };
+      }
+      if (remaining < 0) {
+        return { ok: false, message: "You are over budget." };
+      }
+      return { ok: true, message: "Looks good." };
+    }
+
+async function submitEntry() {
+  const validation = validateEntry();
+  if (!validation.ok) {
+    messageEl.className = "error";
+    messageEl.textContent = validation.message;
+    return;
+  }
+
+  if (APPS_SCRIPT_URL === "PASTE_YOUR_WEB_APP_URL_HERE") {
+    messageEl.className = "error";
+    messageEl.textContent = "Add your Apps Script Web App URL before submitting.";
+    return;
+  }
+
+  const payload = {
+    name: entryNameEl.value.trim(),
+    email: entryEmailEl.value.trim(),
+    golfers: Array.from(picked.values()).map(g => g.name),
+    salaries: Array.from(picked.values()).map(g => g.salary),
+    totalSalary: getSpent(),
+    remainingSalary: getRemaining(),
+    submittedAt: new Date().toISOString()
+  };
+
+  submitBtnEl.disabled = true;
+  messageEl.className = "muted";
+  messageEl.textContent = "Submitting...";
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    messageEl.className = "success";
+    messageEl.textContent = "Entry submitted.";
+  } catch (error) {
+    messageEl.className = "error";
+    messageEl.textContent = "Submission may have gone through. Please check the sheet.";
+  } finally {
+    submitBtnEl.disabled = false;
+  }
+}
+
+    function clearEntry() {
+      picked.clear();
+      entryNameEl.value = "";
+      entryEmailEl.value = "";
+      messageEl.className = "muted";
+      messageEl.textContent = "";
+      renderAll();
+    }
+
+    function renderAll() {
+      renderGolfers();
+      renderPicked();
+      renderStats();
+    }
+
+    searchInputEl.addEventListener("input", renderGolfers);
+    submitBtnEl.addEventListener("click", submitEntry);
+    clearBtnEl.addEventListener("click", clearEntry);
+
+    renderAll();
+  </script>
+</body>
+</html>
