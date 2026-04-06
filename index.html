@@ -1,63 +1,172 @@
-const golfers = [
-  // THE ELITE ($30+)
-  {name: "Scottie Scheffler", salary: 48}, {name: "Jon Rahm", salary: 38}, 
-  {name: "Rory McIlroy", salary: 38}, {name: "Bryson DeChambeau", salary: 35}, 
-  {name: "Ludvig Åberg", salary: 30},
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 Masters Auction Pool</title>
+  <style>
+    :root {
+      --green: #123524;
+      --gold: #c9a227;
+      --bg: #f7f7f2;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --danger: #b91c1c;
+      --success: #166534;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 8px; color: var(--green); }
+    .subtitle { margin: 0 0 20px; color: var(--muted); }
+    .topbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+    .layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 20px; align-items: start; }
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .golfers { max-height: 650px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+    .golfer-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid #ececec; }
+    .golfer-name { font-weight: 600; }
+    button { background: var(--green); color: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+    button.remove { background: #ef4444; }
+    .picked-item { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .rules { font-size: 14px; color: var(--muted); background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px dashed var(--border); margin-top: 10px;}
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .topbar { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>2026 Masters Auction Pool</h1>
+    <p class="subtitle">Pick 4-8 golfers. Budget: $100. Top 4 scores count.</p>
+    <div class="topbar">
+      <div class="stat"><div class="stat-label">Budget</div><div class="stat-value">$100</div></div>
+      <div class="stat"><div class="stat-label">Spent</div><div class="stat-value" id="spentValue">$0</div></div>
+      <div class="stat"><div class="stat-label">Remaining</div><div class="stat-value" id="remainingValue">$100</div></div>
+      <div class="stat"><div class="stat-label">Picked</div><div class="stat-value" id="pickedCount">0</div></div>
+    </div>
+    <div class="layout">
+      <div class="panel">
+        <input type="text" id="searchInput" placeholder="Search 91 players..." style="width:100%; padding:10px; margin-bottom:14px; border-radius:8px; border:1px solid var(--border);" />
+        <div class="golfers" id="golfersList"></div>
+      </div>
+      <div class="panel">
+        <h2 style="margin:0 0 14px; color: var(--green);">Your Entry</h2>
+        <input type="text" id="entryName" placeholder="Your name" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--border);"/>
+        <div id="pickedList"></div>
+        <div class="rules">
+          <strong>Rules:</strong><br>
+          • Pick 4 to 8 players<br>
+          • Stay under $100 total<br>
+          • Amateurs & Legends are $1
+        </div>
+        <p id="message" style="margin:10px 0;"></p>
+        <button id="submitBtn" style="width:100%;">Submit Entry</button>
+      </div>
+    </div>
+  </div>
 
-  // THE CONTENDERS ($20 - $28)
-  {name: "Xander Schauffele", salary: 28}, {name: "Matt Fitzpatrick", salary: 26},
-  {name: "Tommy Fleetwood", salary: 25}, {name: "Cameron Young", salary: 24},
-  {name: "Hideki Matsuyama", salary: 22}, {name: "Collin Morikawa", salary: 22},
-  {name: "Brooks Koepka", salary: 20}, {name: "Justin Rose", salary: 20},
-  {name: "Robert MacIntyre", salary: 20},
+  <script>
+    const BUDGET = 100;
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpyZZhkbYb4TUBSqql2qpC7_xxazdrXAVtOCvk0Al8sfcFjAwb99M2qQA41_w6touA/exec";
 
-  // THE MID-TIER THREATS ($12 - $18)
-  {name: "Min Woo Lee", salary: 18}, {name: "Jordan Spieth", salary: 16},
-  {name: "Chris Gotterup", salary: 16}, {name: "Patrick Reed", salary: 15},
-  {name: "Viktor Hovland", salary: 15}, {name: "Justin Thomas", salary: 14},
-  {name: "Jake Knapp", salary: 14}, {name: "Patrick Cantlay", salary: 13},
-  {name: "Tyrrell Hatton", salary: 13}, {name: "Will Zalatoris", salary: 12},
+    const golfers = [
+      {name: "Scottie Scheffler", salary: 48}, {name: "Jon Rahm", salary: 38}, {name: "Rory McIlroy", salary: 38}, 
+      {name: "Bryson DeChambeau", salary: 35}, {name: "Ludvig Åberg", salary: 30}, {name: "Xander Schauffele", salary: 28}, 
+      {name: "Matt Fitzpatrick", salary: 26}, {name: "Tommy Fleetwood", salary: 25}, {name: "Cameron Young", salary: 24}, 
+      {name: "Hideki Matsuyama", salary: 22}, {name: "Collin Morikawa", salary: 22}, {name: "Brooks Koepka", salary: 20}, 
+      {name: "Justin Rose", salary: 20}, {name: "Robert MacIntyre", salary: 20}, {name: "Min Woo Lee", salary: 18}, 
+      {name: "Jordan Spieth", salary: 16}, {name: "Chris Gotterup", salary: 16}, {name: "Patrick Reed", salary: 15}, 
+      {name: "Viktor Hovland", salary: 15}, {name: "Justin Thomas", salary: 14}, {name: "Jake Knapp", salary: 14}, 
+      {name: "Patrick Cantlay", salary: 13}, {name: "Tyrrell Hatton", salary: 13}, {name: "Will Zalatoris", salary: 12}, 
+      {name: "Gary Woodland", salary: 11}, {name: "Corey Conners", salary: 11}, {name: "Sahith Theegala", salary: 10}, 
+      {name: "Shane Lowry", salary: 10}, {name: "Sepp Straka", salary: 9}, {name: "Jacob Bridgeman", salary: 9}, 
+      {name: "Russell Henley", salary: 9}, {name: "Sam Burns", salary: 8}, {name: "Jason Day", salary: 8}, 
+      {name: "Wyndham Clark", salary: 7}, {name: "Max Homa", salary: 7}, {name: "Brian Harman", salary: 7}, 
+      {name: "Tony Finau", salary: 7}, {name: "Akshay Bhatia", salary: 7}, {name: "Sungjae Im", salary: 6}, 
+      {name: "Rickie Fowler", salary: 6}, {name: "Keegan Bradley", salary: 6}, {name: "Nicolai Højgaard", salary: 5}, 
+      {name: "Rasmus Højgaard", salary: 5}, {name: "Adam Scott", salary: 5}, {name: "Si Woo Kim", salary: 5}, 
+      {name: "Daniel Berger", salary: 4}, {name: "Maverick McNealy", salary: 4}, {name: "Kurt Kitayama", salary: 4}, 
+      {name: "Harris English", salary: 4}, {name: "Ryan Fox", salary: 4}, {name: "Dustin Johnson", salary: 4}, 
+      {name: "Sergio Garcia", salary: 3}, {name: "Alex Noren", salary: 3}, {name: "Aaron Rai", salary: 3}, 
+      {name: "Davis Riley", salary: 3}, {name: "Nick Taylor", salary: 3}, {name: "Ben Griffin", salary: 3}, 
+      {name: "Ryan Gerard", salary: 3}, {name: "Harry Hall", salary: 3}, {name: "Bubba Watson", salary: 2}, 
+      {name: "Danny Willett", salary: 2}, {name: "Charl Schwartzel", salary: 2}, {name: "Zach Johnson", salary: 2}, 
+      {name: "Mike Weir", salary: 1}, {name: "Vijay Singh", salary: 1}, {name: "Fred Couples", salary: 1}, 
+      {name: "Jose Maria Olazabal", salary: 1}, {name: "Angel Cabrera", salary: 1}, {name: "Michael Brennan", salary: 1}, 
+      {name: "Ethan Fang (a)", salary: 1}, {name: "Jackson Herrington (a)", salary: 1}, {name: "Brandon Holtz (a)", salary: 1}, 
+      {name: "Mason Howell (a)", salary: 1}, {name: "Fifa Laopakdee (a)", salary: 1}, {name: "Mateo Pulcini (a)", salary: 1}, 
+      {name: "Casey Jarvis", salary: 2}, {name: "Tom McKibbin", salary: 2}, {name: "Eric Cole", salary: 2}, 
+      {name: "Austin Eckroat", salary: 2}, {name: "Matthieu Pavon", salary: 2}, {name: "Adam Hadwin", salary: 2}, 
+      {name: "Nicolas Echavarria", salary: 2}, {name: "Max Greyserman", salary: 2}, {name: "Johnny Keefer", salary: 2}, 
+      {name: "Haotong Li", salary: 2}, {name: "Matt McCarty", salary: 2}, {name: "Rasmus Neergaard-Petersen", salary: 2}, 
+      {name: "Andrew Novak", salary: 2}, {name: "Carlos Ortiz", salary: 2}, {name: "Marco Penge", salary: 2}, 
+      {name: "Aldrich Potgieter", salary: 2}, {name: "Kristoffer Reitan", salary: 2}, {name: "Sam Stevens", salary: 2}, 
+      {name: "Sami Valimaki", salary: 2}
+    ].sort((a, b) => a.name.localeCompare(b.name));
 
-  // THE VALUE PLAYS ($6 - $11)
-  {name: "Gary Woodland", salary: 11}, {name: "Corey Conners", salary: 11},
-  {name: "Sahith Theegala", salary: 10}, {name: "Shane Lowry", salary: 10},
-  {name: "Sepp Straka", salary: 9}, {name: "Jacob Bridgeman", salary: 9},
-  {name: "Russell Henley", salary: 9}, {name: "Sam Burns", salary: 8},
-  {name: "Jason Day", salary: 8}, {name: "Wyndham Clark", salary: 7},
-  {name: "Max Homa", salary: 7}, {name: "Brian Harman", salary: 7},
-  {name: "Tony Finau", salary: 7}, {name: "Akshay Bhatia", salary: 7},
-  {name: "Sungjae Im", salary: 6}, {name: "Rickie Fowler", salary: 6},
-  {name: "Keegan Bradley", salary: 6},
+    const picked = new Map();
+    const golfersListEl = document.getElementById("golfersList");
+    const pickedListEl = document.getElementById("pickedList");
+    const searchInputEl = document.getElementById("searchInput");
+    const spentValueEl = document.getElementById("spentValue");
+    const remainingValueEl = document.getElementById("remainingValue");
+    const pickedCountEl = document.getElementById("pickedCount");
+    const messageEl = document.getElementById("message");
+    const entryNameEl = document.getElementById("entryName");
 
-  // THE LONGSHOTS ($3 - $5)
-  {name: "Nicolai Højgaard", salary: 5}, {name: "Rasmus Højgaard", salary: 5},
-  {name: "Adam Scott", salary: 5}, {name: "Si Woo Kim", salary: 5},
-  {name: "Daniel Berger", salary: 4}, {name: "Maverick McNealy", salary: 4},
-  {name: "Kurt Kitayama", salary: 4}, {name: "Harris English", salary: 4},
-  {name: "Ryan Fox", salary: 4}, {name: "Dustin Johnson", salary: 4},
-  {name: "Sergio Garcia", salary: 3}, {name: "Alex Noren", salary: 3},
-  {name: "Aaron Rai", salary: 3}, {name: "Davis Riley", salary: 3},
-  {name: "Nick Taylor", salary: 3}, {name: "Ben Griffin", salary: 3},
-  {name: "Ryan Gerard", salary: 3}, {name: "Harry Hall", salary: 3},
+    function renderAll() {
+      const query = searchInputEl.value.toLowerCase();
+      golfersListEl.innerHTML = "";
+      golfers.filter(g => g.name.toLowerCase().includes(query)).forEach(g => {
+        const row = document.createElement("div");
+        row.className = "golfer-row";
+        const isPicked = picked.has(g.name);
+        row.innerHTML = `<div><b>${g.name}</b></div><div>$${g.salary}</div><button class="${isPicked?'remove':''}">${isPicked?'Remove':'Add'}</button>`;
+        row.querySelector("button").onclick = () => {
+          if (isPicked) picked.delete(g.name);
+          else if (picked.size < 8) picked.set(g.name, g);
+          renderAll();
+        };
+        golfersListEl.appendChild(row);
+      });
 
-  // THE BASEMENT ($1 - $2)
-  {name: "Bubba Watson", salary: 2}, {name: "Danny Willett", salary: 2},
-  {name: "Charl Schwartzel", salary: 2}, {name: "Zach Johnson", salary: 2},
-  {name: "Mike Weir", salary: 1}, {name: "Vijay Singh", salary: 1},
-  {name: "Fred Couples", salary: 1}, {name: "Jose Maria Olazabal", salary: 1},
-  {name: "Angel Cabrera", salary: 1}, {name: "Michael Brennan", salary: 1},
-  {name: "Ethan Fang (a)", salary: 1}, {name: "Jackson Herrington (a)", salary: 1},
-  {name: "Brandon Holtz (a)", salary: 1}, {name: "Mason Howell (a)", salary: 1},
-  {name: "Fifa Laopakdee (a)", salary: 1}, {name: "Mateo Pulcini (a)", salary: 1},
-  // Adding remaining field players as $2 value picks
-  {name: "Casey Jarvis", salary: 2}, {name: "Tom McKibbin", salary: 2},
-  {name: "Eric Cole", salary: 2}, {name: "Austin Eckroat", salary: 2},
-  {name: "Matthieu Pavon", salary: 2}, {name: "Adam Hadwin", salary: 2},
-  {name: "Nicolas Echavarria", salary: 2}, {name: "Max Greyserman", salary: 2},
-  {name: "Johnny Keefer", salary: 2}, {name: "Haotong Li", salary: 2},
-  {name: "Matt McCarty", salary: 2}, {name: "Rasmus Neergaard-Petersen", salary: 2},
-  {name: "Andrew Novak", salary: 2}, {name: "Carlos Ortiz", salary: 2},
-  {name: "Marco Penge", salary: 2}, {name: "Aldrich Potgieter", salary: 2},
-  {name: "Kristoffer Reitan", salary: 2}, {name: "Sam Stevens", salary: 2},
-  {name: "Sami Valimaki", salary: 2}
-].sort((a, b) => a.name.localeCompare(b.name));
+      pickedListEl.innerHTML = picked.size ? "" : "<div class='muted'>No golfers selected.</div>";
+      let spent = 0;
+      picked.forEach(g => {
+        spent += g.salary;
+        const item = document.createElement("div");
+        item.className = "picked-item";
+        item.innerHTML = `<div>${g.name}</div><div>$${g.salary}</div><button class="remove">×</button>`;
+        item.querySelector("button").onclick = () => { picked.delete(g.name); renderAll(); };
+        pickedListEl.appendChild(item);
+      });
+
+      spentValueEl.textContent = "$" + spent;
+      remainingValueEl.textContent = "$" + (BUDGET - spent);
+      remainingValueEl.style.color = (BUDGET - spent) < 0 ? "red" : "";
+      pickedCountEl.textContent = picked.size;
+    }
+
+    searchInputEl.oninput = renderAll;
+    renderAll();
+
+    document.getElementById("submitBtn").onclick = async () => {
+      const spent = Array.from(picked.values()).reduce((s, g) => s + g.salary, 0);
+      if (!entryNameEl.value) { messageEl.innerText = "Enter your name!"; messageEl.style.color = "red"; return; }
+      if (picked.size < 4) { messageEl.innerText = "Pick at least 4!"; messageEl.style.color = "red"; return; }
+      if (spent > BUDGET) { messageEl.innerText = "Over budget!"; messageEl.style.color = "red"; return; }
+      
+      messageEl.innerText = "Submitting...";
+      messageEl.style.color = "black";
+      try {
+        await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: entryNameEl.value, golfers: Array.from(picked.keys()) })});
+        messageEl.innerText = "Success! Good luck.";
+        messageEl.style.color = "green";
+      } catch (e) { messageEl.innerText = "Error submitting."; messageEl.style.color = "red"; }
+    };
+  </script>
+</body>
+</html>
