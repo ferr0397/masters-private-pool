@@ -29,10 +29,11 @@
     .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
     .golfers { max-height: 650px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
     .golfer-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid #ececec; }
-    .golfer-name { font-weight: 600; }
     button { background: var(--green); color: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
     button.remove { background: #ef4444; }
     .picked-item { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .input-group { margin-bottom: 12px; }
+    input[type="text"], input[type="email"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; }
     .rules { font-size: 14px; color: var(--muted); background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px dashed var(--border); margin-top: 10px;}
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .topbar { grid-template-columns: repeat(2, 1fr); } }
   </style>
@@ -49,12 +50,17 @@
     </div>
     <div class="layout">
       <div class="panel">
-        <input type="text" id="searchInput" placeholder="Search 91 players..." style="width:100%; padding:10px; margin-bottom:14px; border-radius:8px; border:1px solid var(--border);" />
+        <input type="text" id="searchInput" placeholder="Search 91 players..." style="margin-bottom:14px;" />
         <div class="golfers" id="golfersList"></div>
       </div>
       <div class="panel">
         <h2 style="margin:0 0 14px; color: var(--green);">Your Entry</h2>
-        <input type="text" id="entryName" placeholder="Your name" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--border);"/>
+        <div class="input-group">
+          <input type="text" id="entryName" placeholder="Your full name"/>
+        </div>
+        <div class="input-group">
+          <input type="email" id="entryEmail" placeholder="Email address"/>
+        </div>
         <div id="pickedList"></div>
         <div class="rules">
           <strong>Rules:</strong><br>
@@ -62,7 +68,7 @@
           • Stay under $100 total<br>
           • Amateurs & Legends are $1
         </div>
-        <p id="message" style="margin:10px 0;"></p>
+        <p id="message" style="margin:10px 0; font-weight: 600;"></p>
         <button id="submitBtn" style="width:100%;">Submit Entry</button>
       </div>
     </div>
@@ -116,6 +122,7 @@
     const pickedCountEl = document.getElementById("pickedCount");
     const messageEl = document.getElementById("message");
     const entryNameEl = document.getElementById("entryName");
+    const entryEmailEl = document.getElementById("entryEmail");
 
     function renderAll() {
       const query = searchInputEl.value.toLowerCase();
@@ -133,7 +140,7 @@
         golfersListEl.appendChild(row);
       });
 
-      pickedListEl.innerHTML = picked.size ? "" : "<div class='muted'>No golfers selected.</div>";
+      pickedListEl.innerHTML = picked.size ? "" : "<div class='muted' style='padding:10px; text-align:center;'>No golfers selected.</div>";
       let spent = 0;
       picked.forEach(g => {
         spent += g.salary;
@@ -146,7 +153,7 @@
 
       spentValueEl.textContent = "$" + spent;
       remainingValueEl.textContent = "$" + (BUDGET - spent);
-      remainingValueEl.style.color = (BUDGET - spent) < 0 ? "red" : "";
+      remainingValueEl.style.color = (BUDGET - spent) < 0 ? "var(--danger)" : "";
       pickedCountEl.textContent = picked.size;
     }
 
@@ -155,17 +162,50 @@
 
     document.getElementById("submitBtn").onclick = async () => {
       const spent = Array.from(picked.values()).reduce((s, g) => s + g.salary, 0);
-      if (!entryNameEl.value) { messageEl.innerText = "Enter your name!"; messageEl.style.color = "red"; return; }
-      if (picked.size < 4) { messageEl.innerText = "Pick at least 4!"; messageEl.style.color = "red"; return; }
-      if (spent > BUDGET) { messageEl.innerText = "Over budget!"; messageEl.style.color = "red"; return; }
       
-      messageEl.innerText = "Submitting...";
-      messageEl.style.color = "black";
+      // Basic Validation
+      if (!entryNameEl.value || !entryEmailEl.value) { 
+        messageEl.innerText = "Name and Email are required!"; 
+        messageEl.style.color = "var(--danger)"; 
+        return; 
+      }
+      if (picked.size < 4) { 
+        messageEl.innerText = "Pick at least 4 golfers!"; 
+        messageEl.style.color = "var(--danger)"; 
+        return; 
+      }
+      if (spent > BUDGET) { 
+        messageEl.innerText = "You are over budget!"; 
+        messageEl.style.color = "var(--danger)"; 
+        return; 
+      }
+      
+      messageEl.innerText = "Submitting your entry...";
+      messageEl.style.color = "var(--text)";
+      
+      const payload = {
+        name: entryNameEl.value,
+        email: entryEmailEl.value,
+        golfers: Array.from(picked.keys())
+      };
+
       try {
-        await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ name: entryNameEl.value, golfers: Array.from(picked.keys()) })});
-        messageEl.innerText = "Success! Good luck.";
-        messageEl.style.color = "green";
-      } catch (e) { messageEl.innerText = "Error submitting."; messageEl.style.color = "red"; }
+        await fetch(APPS_SCRIPT_URL, { 
+          method: "POST", 
+          mode: "no-cors", 
+          body: JSON.stringify(payload)
+        });
+        messageEl.innerText = "Success! Good luck at Augusta.";
+        messageEl.style.color = "var(--success)";
+        // Optional: clear form
+        picked.clear();
+        entryNameEl.value = "";
+        entryEmailEl.value = "";
+        renderAll();
+      } catch (e) { 
+        messageEl.innerText = "Error submitting. Please try again."; 
+        messageEl.style.color = "var(--danger)"; 
+      }
     };
   </script>
 </body>
