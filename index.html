@@ -50,23 +50,19 @@
     </div>
     <div class="layout">
       <div class="panel">
-        <input type="text" id="searchInput" placeholder="Search 91 players..." style="margin-bottom:14px;" />
+        <input type="text" id="searchInput" placeholder="Search the field..." style="margin-bottom:14px;" />
         <div class="golfers" id="golfersList"></div>
       </div>
       <div class="panel">
         <h2 style="margin:0 0 14px; color: var(--green);">Your Entry</h2>
-        <div class="input-group">
-          <input type="text" id="entryName" placeholder="Your full name"/>
-        </div>
-        <div class="input-group">
-          <input type="email" id="entryEmail" placeholder="Email address"/>
-        </div>
+        <div class="input-group"><input type="text" id="entryName" placeholder="Your full name"/></div>
+        <div class="input-group"><input type="email" id="entryEmail" placeholder="Email address"/></div>
         <div id="pickedList"></div>
         <div class="rules">
           <strong>Rules:</strong><br>
-          • Entry fee is $70 <br>
           • Pick 4 to 8 players<br>
           • Stay under $100 total<br>
+          • Minimum salary is <strong>$4</strong>
         </div>
         <p id="message" style="margin:10px 0; font-weight: 600;"></p>
         <button id="submitBtn" style="width:100%;">Submit Entry</button>
@@ -78,39 +74,39 @@
     const BUDGET = 100;
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpyZZhkbYb4TUBSqql2qpC7_xxazdrXAVtOCvk0Al8sfcFjAwb99M2qQA41_w6touA/exec";
 
+    // Re-priced based on the odds image provided + $4 Floor
     const golfers = [
-      {name: "Scottie Scheffler", salary: 48}, {name: "Jon Rahm", salary: 38}, {name: "Rory McIlroy", salary: 38}, 
-      {name: "Bryson DeChambeau", salary: 35}, {name: "Ludvig Åberg", salary: 30}, {name: "Xander Schauffele", salary: 28}, 
-      {name: "Matt Fitzpatrick", salary: 26}, {name: "Tommy Fleetwood", salary: 25}, {name: "Cameron Young", salary: 24}, 
-      {name: "Hideki Matsuyama", salary: 22}, {name: "Collin Morikawa", salary: 22}, {name: "Brooks Koepka", salary: 20}, 
-      {name: "Justin Rose", salary: 20}, {name: "Robert MacIntyre", salary: 20}, {name: "Min Woo Lee", salary: 18}, 
-      {name: "Jordan Spieth", salary: 16}, {name: "Chris Gotterup", salary: 16}, {name: "Patrick Reed", salary: 15}, 
-      {name: "Viktor Hovland", salary: 15}, {name: "Justin Thomas", salary: 14}, {name: "Jake Knapp", salary: 14}, 
-      {name: "Patrick Cantlay", salary: 13}, {name: "Tyrrell Hatton", salary: 13}, {name: "Will Zalatoris", salary: 12}, 
-      {name: "Gary Woodland", salary: 11}, {name: "Corey Conners", salary: 11}, {name: "Sahith Theegala", salary: 10}, 
-      {name: "Shane Lowry", salary: 10}, {name: "Sepp Straka", salary: 9}, {name: "Jacob Bridgeman", salary: 9}, 
-      {name: "Russell Henley", salary: 9}, {name: "Sam Burns", salary: 8}, {name: "Jason Day", salary: 8}, 
-      {name: "Wyndham Clark", salary: 7}, {name: "Max Homa", salary: 7}, {name: "Brian Harman", salary: 7}, 
-      {name: "Tony Finau", salary: 7}, {name: "Akshay Bhatia", salary: 7}, {name: "Sungjae Im", salary: 6}, 
-      {name: "Rickie Fowler", salary: 6}, {name: "Keegan Bradley", salary: 6}, {name: "Nicolai Højgaard", salary: 5}, 
-      {name: "Rasmus Højgaard", salary: 5}, {name: "Adam Scott", salary: 5}, {name: "Si Woo Kim", salary: 5}, 
-      {name: "Daniel Berger", salary: 4}, {name: "Maverick McNealy", salary: 4}, {name: "Kurt Kitayama", salary: 4}, 
-      {name: "Harris English", salary: 4}, {name: "Ryan Fox", salary: 4}, {name: "Dustin Johnson", salary: 4}, 
-      {name: "Sergio Garcia", salary: 3}, {name: "Alex Noren", salary: 3}, {name: "Aaron Rai", salary: 3}, 
-      {name: "Davis Riley", salary: 3}, {name: "Nick Taylor", salary: 3}, {name: "Ben Griffin", salary: 3}, 
-      {name: "Ryan Gerard", salary: 3}, {name: "Harry Hall", salary: 3}, {name: "Bubba Watson", salary: 2}, 
-      {name: "Danny Willett", salary: 2}, {name: "Charl Schwartzel", salary: 2}, {name: "Zach Johnson", salary: 2}, 
-      {name: "Mike Weir", salary: 1}, {name: "Vijay Singh", salary: 1}, {name: "Fred Couples", salary: 1}, 
-      {name: "Jose Maria Olazabal", salary: 1}, {name: "Angel Cabrera", salary: 1}, {name: "Michael Brennan", salary: 1}, 
-      {name: "Ethan Fang (a)", salary: 1}, {name: "Jackson Herrington (a)", salary: 1}, {name: "Brandon Holtz (a)", salary: 1}, 
-      {name: "Mason Howell (a)", salary: 1}, {name: "Fifa Laopakdee (a)", salary: 1}, {name: "Mateo Pulcini (a)", salary: 1}, 
-      {name: "Casey Jarvis", salary: 2}, {name: "Tom McKibbin", salary: 2}, {name: "Eric Cole", salary: 2}, 
-      {name: "Austin Eckroat", salary: 2}, {name: "Matthieu Pavon", salary: 2}, {name: "Adam Hadwin", salary: 2}, 
-      {name: "Nicolas Echavarria", salary: 2}, {name: "Max Greyserman", salary: 2}, {name: "Johnny Keefer", salary: 2}, 
-      {name: "Haotong Li", salary: 2}, {name: "Matt McCarty", salary: 2}, {name: "Rasmus Neergaard-Petersen", salary: 2}, 
-      {name: "Andrew Novak", salary: 2}, {name: "Carlos Ortiz", salary: 2}, {name: "Marco Penge", salary: 2}, 
-      {name: "Aldrich Potgieter", salary: 2}, {name: "Kristoffer Reitan", salary: 2}, {name: "Sam Stevens", salary: 2}, 
-      {name: "Sami Valimaki", salary: 2}
+      {name: "Scottie Scheffler", salary: 48}, {name: "Jon Rahm", salary: 40}, {name: "Bryson DeChambeau", salary: 36}, 
+      {name: "Rory McIlroy", salary: 34}, {name: "Ludvig Åberg", salary: 30}, {name: "Xander Schauffele", salary: 28}, 
+      {name: "Tommy Fleetwood", salary: 25}, {name: "Cameron Young", salary: 25}, {name: "Matt Fitzpatrick", salary: 24}, 
+      {name: "Hideki Matsuyama", salary: 22}, {name: "Collin Morikawa", salary: 21}, {name: "Robert MacIntyre", salary: 20}, 
+      {name: "Min Woo Lee", salary: 18}, {name: "Justin Rose", salary: 18}, {name: "Brooks Koepka", salary: 17}, 
+      {name: "Jordan Spieth", salary: 16}, {name: "Chris Gotterup", salary: 16}, {name: "Patrick Reed", salary: 16}, 
+      {name: "Viktor Hovland", salary: 15}, {name: "Russell Henley", salary: 15}, {name: "Si Woo Kim", salary: 14}, 
+      {name: "Justin Thomas", salary: 13}, {name: "Akshay Bhatia", salary: 12}, {name: "Patrick Cantlay", salary: 12}, 
+      {name: "Adam Scott", salary: 11}, {name: "Jason Day", salary: 10}, {name: "Jake Knapp", salary: 10}, 
+      {name: "Shane Lowry", salary: 10}, {name: "Sam Burns", salary: 9}, {name: "J.J. Spaun", salary: 9}, 
+      {name: "Sepp Straka", salary: 8}, {name: "Tyrrell Hatton", salary: 8}, {name: "Corey Conners", salary: 8}, 
+      {name: "Nicolai Højgaard", salary: 8}, {name: "Maverick McNealy", salary: 7}, {name: "Jacob Bridgeman", salary: 7}, 
+      {name: "Kurt Kitayama", salary: 6}, {name: "Harris English", salary: 6}, {name: "Daniel Berger", salary: 5}, 
+      {name: "Gary Woodland", salary: 5}, {name: "Ben Griffin", salary: 5}, {name: "Cameron Davis", salary: 5}, 
+      {name: "Max Homa", salary: 5}, {name: "Rasmus Højgaard", salary: 5}, {name: "Keegan Bradley", salary: 5}, 
+      // EVERYTHING BELOW 150-1 ODDS MOVES TO $4 FLOOR
+      {name: "Marco Penge", salary: 4}, {name: "Harry Hall", salary: 4}, {name: "Alex Noren", salary: 4}, 
+      {name: "Ryan Gerard", salary: 4}, {name: "Nick Taylor", salary: 4}, {name: "Ryan Fox", salary: 4}, 
+      {name: "Wyndham Clark", salary: 4}, {name: "Brian Harman", salary: 4}, {name: "Michael Kim", salary: 4}, 
+      {name: "Max Greyserman", salary: 4}, {name: "Aaron Rai", salary: 4}, {name: "Kristoffer Reitan", salary: 4}, 
+      {name: "Sergio Garcia", salary: 4}, {name: "Casey Jarvis", salary: 4}, {name: "Carlos Ortiz", salary: 4}, 
+      {name: "Tom McKibbin", salary: 4}, {name: "Dustin Johnson", salary: 4}, {name: "Matt McCarty", salary: 4}, 
+      {name: "Haotong Li", salary: 4}, {name: "Andrew Novak", salary: 4}, {name: "Nico Echavarria", salary: 4}, 
+      {name: "Rasmus Neergaard-Petersen", salary: 4}, {name: "Aldrich Potgieter", salary: 4}, {name: "Sami Valimaki", salary: 4}, 
+      {name: "Johnny Keefer", salary: 4}, {name: "Michael Brennan", salary: 4}, {name: "Bubba Watson", salary: 4}, 
+      {name: "Zach Johnson", salary: 4}, {name: "Charl Schwartzel", salary: 4}, {name: "Davis Riley", salary: 4}, 
+      {name: "Brian Campbell", salary: 4}, {name: "Danny Willett", salary: 4}, {name: "Mason Howell", salary: 4}, 
+      {name: "Ethan Fang", salary: 4}, {name: "Angel Cabrera", salary: 4}, {name: "Pongsapak Laopakdee", salary: 4}, 
+      {name: "Naoyuki Kataoka", salary: 4}, {name: "Brandon Holtz", salary: 4}, {name: "Vijay Singh", salary: 4}, 
+      {name: "Fred Couples", salary: 4}, {name: "Mike Weir", salary: 4}, {name: "Mateo Pulcini", salary: 4}, 
+      {name: "Jackson Herrington", salary: 4}, {name: "Jose Maria Olazabal", salary: 4}
     ].sort((a, b) => a.name.localeCompare(b.name));
 
     const picked = new Map();
@@ -139,7 +135,6 @@
         };
         golfersListEl.appendChild(row);
       });
-
       pickedListEl.innerHTML = picked.size ? "" : "<div class='muted' style='padding:10px; text-align:center;'>No golfers selected.</div>";
       let spent = 0;
       picked.forEach(g => {
@@ -150,7 +145,6 @@
         item.querySelector("button").onclick = () => { picked.delete(g.name); renderAll(); };
         pickedListEl.appendChild(item);
       });
-
       spentValueEl.textContent = "$" + spent;
       remainingValueEl.textContent = "$" + (BUDGET - spent);
       remainingValueEl.style.color = (BUDGET - spent) < 0 ? "var(--danger)" : "";
@@ -162,50 +156,22 @@
 
     document.getElementById("submitBtn").onclick = async () => {
       const spent = Array.from(picked.values()).reduce((s, g) => s + g.salary, 0);
+      if (!entryNameEl.value || !entryEmailEl.value) { messageEl.innerText = "Name and Email are required!"; messageEl.style.color = "var(--danger)"; return; }
+      if (picked.size < 4) { messageEl.innerText = "Pick at least 4 golfers!"; messageEl.style.color = "var(--danger)"; return; }
+      if (spent > BUDGET) { messageEl.innerText = "You are over budget!"; messageEl.style.color = "var(--danger)"; return; }
       
-      // Basic Validation
-      if (!entryNameEl.value || !entryEmailEl.value) { 
-        messageEl.innerText = "Name and Email are required!"; 
-        messageEl.style.color = "var(--danger)"; 
-        return; 
-      }
-      if (picked.size < 4) { 
-        messageEl.innerText = "Pick at least 4 golfers!"; 
-        messageEl.style.color = "var(--danger)"; 
-        return; 
-      }
-      if (spent > BUDGET) { 
-        messageEl.innerText = "You are over budget!"; 
-        messageEl.style.color = "var(--danger)"; 
-        return; 
-      }
-      
-      messageEl.innerText = "Submitting your entry...";
+      messageEl.innerText = "Submitting...";
       messageEl.style.color = "var(--text)";
-      
-      const payload = {
-        name: entryNameEl.value,
-        email: entryEmailEl.value,
-        golfers: Array.from(picked.keys())
-      };
-
       try {
         await fetch(APPS_SCRIPT_URL, { 
           method: "POST", 
           mode: "no-cors", 
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ name: entryNameEl.value, email: entryEmailEl.value, golfers: Array.from(picked.keys()) })
         });
         messageEl.innerText = "Success! Good luck at Augusta.";
         messageEl.style.color = "var(--success)";
-        // Optional: clear form
-        picked.clear();
-        entryNameEl.value = "";
-        entryEmailEl.value = "";
-        renderAll();
-      } catch (e) { 
-        messageEl.innerText = "Error submitting. Please try again."; 
-        messageEl.style.color = "var(--danger)"; 
-      }
+        picked.clear(); entryNameEl.value = ""; entryEmailEl.value = ""; renderAll();
+      } catch (e) { messageEl.innerText = "Error submitting."; messageEl.style.color = "var(--danger)"; }
     };
   </script>
 </body>
