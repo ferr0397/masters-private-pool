@@ -74,7 +74,6 @@
     const BUDGET = 100;
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpyZZhkbYb4TUBSqql2qpC7_xxazdrXAVtOCvk0Al8sfcFjAwb99M2qQA41_w6touA/exec";
 
-    // Re-priced based on the odds image provided + $4 Floor
     const golfers = [
       {name: "Scottie Scheffler", salary: 48}, {name: "Jon Rahm", salary: 40}, {name: "Bryson DeChambeau", salary: 36}, 
       {name: "Rory McIlroy", salary: 34}, {name: "Ludvig Åberg", salary: 30}, {name: "Xander Schauffele", salary: 28}, 
@@ -91,7 +90,6 @@
       {name: "Kurt Kitayama", salary: 6}, {name: "Harris English", salary: 6}, {name: "Daniel Berger", salary: 5}, 
       {name: "Gary Woodland", salary: 5}, {name: "Ben Griffin", salary: 5}, {name: "Cameron Davis", salary: 5}, 
       {name: "Max Homa", salary: 5}, {name: "Rasmus Højgaard", salary: 5}, {name: "Keegan Bradley", salary: 5}, 
-      // EVERYTHING BELOW 150-1 ODDS MOVES TO $4 FLOOR
       {name: "Marco Penge", salary: 4}, {name: "Harry Hall", salary: 4}, {name: "Alex Noren", salary: 4}, 
       {name: "Ryan Gerard", salary: 4}, {name: "Nick Taylor", salary: 4}, {name: "Ryan Fox", salary: 4}, 
       {name: "Wyndham Clark", salary: 4}, {name: "Brian Harman", salary: 4}, {name: "Michael Kim", salary: 4}, 
@@ -107,7 +105,7 @@
       {name: "Naoyuki Kataoka", salary: 4}, {name: "Brandon Holtz", salary: 4}, {name: "Vijay Singh", salary: 4}, 
       {name: "Fred Couples", salary: 4}, {name: "Mike Weir", salary: 4}, {name: "Mateo Pulcini", salary: 4}, 
       {name: "Jackson Herrington", salary: 4}, {name: "Jose Maria Olazabal", salary: 4}
-    ].sort((a, b) => a.name.localeCompare(b.name));
+    ].sort((a, b) => b.salary - a.salary || a.name.localeCompare(b.name)); // HIGHEST TO LOWEST PRICE
 
     const picked = new Map();
     const golfersListEl = document.getElementById("golfersList");
